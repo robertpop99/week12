@@ -21,9 +21,10 @@ test: sketch.c test.c
 # For Linux/MacOS, include the advanced debugging options
 else
 
-sketch: sketch.c
-	clang -std=c11 -Wall -pedantic -g $@.c display.c -lSDL2 -o $@ \
+display: sketch.c display.c
+	clang -std=c11 -Wall -pedantic -g sketch.c display.c -lSDL2 -o sketch \
 	    -fsanitize=undefined -fsanitize=address
+	./sketch test
 
 test: sketch.c test.c
 	clang -std=c11 -Wall -pedantic -g sketch.c test.c -o sketch \
