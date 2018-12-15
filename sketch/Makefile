@@ -4,7 +4,7 @@ MacOS := $(findstring Darwin, $(shell uname -s))
 Windows := $(findstring NT, $(shell uname -s))
 
 # Specify what typing 'make' on its own will compile
-default: sketch
+default: test
 
 # For Windows, add the .exe extension
 ifdef Windows
@@ -26,8 +26,9 @@ sketch: sketch.c
 	    -fsanitize=undefined -fsanitize=address
 
 test: sketch.c test.c
-	clang -std=c11 -Wall -pedantic -g sketch.c test.c -o $@ \
-	    -fsanitize=undefined -fsanitize=address
+	clang -std=c11 -Wall -pedantic -g sketch.c test.c -o sketch \
+	    -fsanitize=undefined -fsanitize=address 
+	./sketch test
 
 %: %.c
 	clang -Dtest_$@ -std=c11 -Wall -pedantic -g $@.c -o $@ \
