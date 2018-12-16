@@ -4,6 +4,7 @@
 #include <string.h>
 #include <assert.h>
 #include <stdbool.h>
+
 struct cursor{
  long x;   long y;
  long dx;  long dy;
