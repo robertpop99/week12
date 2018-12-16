@@ -24,12 +24,12 @@ else
 display: sketch.c display.c
 	clang -std=c11 -Wall -pedantic -g sketch.c display.c -lSDL2 -o sketch \
 	    -fsanitize=undefined -fsanitize=address
-	./sketch test
+	./sketch
 
 test: sketch.c test.c
 	clang -std=c11 -Wall -pedantic -g sketch.c test.c -o sketch \
 	    -fsanitize=undefined -fsanitize=address 
-	./sketch test
+	./sketch
 
 %: %.c
 	clang -Dtest_$@ -std=c11 -Wall -pedantic -g $@.c -o $@ \
