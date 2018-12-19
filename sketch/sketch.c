@@ -13,16 +13,19 @@ struct cursor{
  long dt;
 } cursor;
 
+//returs the first two bits
 long getOp(unsigned char b)
 {
   return ((0xC0 & b) >> 6);
 }
 
+//returns the last 6 bits
 long getPos(unsigned char b)
 {
   return (0x3F & b);
 }
 
+//draws a line on the screen and updates the cursor
 void draw(display *d)
 {
   if(cursor.pen) line(d, cursor.x, cursor.y,
@@ -33,6 +36,7 @@ void draw(display *d)
   cursor.dy = 0;
 }
 
+//stores pos the current PR
 void op2(long pos)
 {
   cursor.pr_init = true;
@@ -40,6 +44,7 @@ void op2(long pos)
   cursor.pr_len += 6;
 }
 
+//resets PR
 void reset_pr()
 {
   cursor.pr = 0;
@@ -47,6 +52,7 @@ void reset_pr()
   cursor.pr_init = false;
 }
 
+//returns the value inside PR with pos after it
 long getValue(long pos)
 {
   long res = 0;
@@ -75,17 +81,20 @@ long getValue(long pos)
   return res;
 }
 
+//opcode 0, changes dx
 void op0(long pos)
 {
   cursor.dx = getValue(pos);
 }
 
+//opcode 1, changes dy and draws a line
 void op1(display *d, long pos)
 {
   cursor.dy = getValue(pos);
   draw(d);
 }
 
+//opcode 4, adds a pause
 void do1(display *d)
 {
   if(cursor.pr != 0) cursor.dt = cursor.pr;
@@ -93,12 +102,14 @@ void do1(display *d)
   pause(d,(int)cursor.dt);
 }
 
+//opcode 7, changes the color
 void do4(display *d)
 {
   colour(d, (int)cursor.pr);
   reset_pr();
 }
 
+///opcode 3, based on the operand choses the opcode
 void op3(display *d, long pos)
 {
   if(pos == 0) cursor.pen = !cursor.pen;
@@ -108,6 +119,7 @@ void op3(display *d, long pos)
   else if(pos == 4) do4(d);
 }
 
+//given a byte, runs the operation represented by it
 void run(display *d, unsigned char b)
 {
     long op = getOp(b);
@@ -121,9 +133,10 @@ void run(display *d, unsigned char b)
     }
 }
 
+//reads the file, byte by byte
 void input(char *file)
 {
-  display *d = newDisplay(file, 200, 200);
+  display *d = newDisplay(file, 1280, 720);
   cursor = (struct cursor) {0, 0, 0, 0, 0, 0, 0, 0, 0};
   FILE *in = fopen(file,"rb");
   unsigned char b = fgetc(in);
@@ -139,36 +152,56 @@ void input(char *file)
 
 //------------------------------------------------------------------
 //testing
-//
-// void testget()
-// {
-//   assert(getOp(0x03) == 0); assert(getOp(0x3D) == 0);
-//   assert(getOp(0x7D) == 1); assert(getOp(0x44) == 1);
-//   assert(getOp(0x8F) == 2); assert(getOp(0xBC) == 2);
-//   assert(getOp(0xFF) == 3); assert(getOp(0xD0) == 3);
-//   assert(getPos(0x03) == 3); assert(getPos(0x3D) == -3);
-//   assert(getPos(0x7D) == -3); assert(getPos(0x44) == 4);
-//   assert(getPos(0x8F) == 15); assert(getPos(0xBC) == -4);
-//   assert(getPos(0xFF) == -1); assert(getPos(0xD0) == 16);
-// }
 
-// void testrun()
-// {
-//   cursor = (struct cursor) {0, 0, 0, 0, 0};
-//   run(NULL,0x03);
-//   assert(cursor.dx == 3);
-//   run(NULL,0xC0);
-//   assert(cursor.pen == 1);
-//   run(NULL,0x3F);
-//   assert(cursor.dx == 2);
-//   run(NULL,0xC0);
-//   assert(cursor.pen == 0);
-// }
+//tests getoOp and getPos
+void testget()
+{
+  assert(getOp(0x03) == 0); assert(getOp(0x3D) == 0);
+  assert(getOp(0x7D) == 1); assert(getOp(0x44) == 1);
+  assert(getOp(0x8F) == 2); assert(getOp(0xBC) == 2);
+  assert(getOp(0xFF) == 3); assert(getOp(0xD0) == 3);
+  assert(getPos(0x03) == 3); assert(getPos(0x3D) == 61);
+  assert(getPos(0x7D) == 61); assert(getPos(0x44) == 4);
+  assert(getPos(0x8F) == 15); assert(getPos(0xBC) == 60);
+  assert(getPos(0xFF) == 63); assert(getPos(0xD0) == 16);
+}
+
+//tests opcode 0 and 3
+void testrun()
+{
+  cursor = (struct cursor) {0, 0, 0, 0, 0, 0, 0, 0, 0};
+  run(NULL,0x03);
+  assert(cursor.dx == 3);
+  run(NULL,0xC0);
+  assert(cursor.pen == 1);
+  run(NULL,0x3F);
+  assert(cursor.dx == -1);
+  run(NULL,0xC0);
+  assert(cursor.pen == 0);
+}
+
+//tests getValue
+void testvalue()
+{
+  cursor = (struct cursor) {0, 0, 0, 0, 0, 0, 0, 0, 0};
+  run(NULL,0x9F);
+  assert(cursor.pr == 31);
+  run(NULL,0x81);
+  assert(cursor.pr == 0x7C1);
+  reset_pr();
+  run(NULL,0x80);
+  run(NULL,0x3F);
+  assert(cursor.dx == 0x3F);
+  reset_pr();
+  run(NULL,0xA0);
+  assert(getValue(0x04) == -2044);
+}
 
 void test()
 {
-  //testget();
-  //testrun();
+  testget();
+  testrun();
+  testvalue();
   printf("All tests passed!\n");
 }
 

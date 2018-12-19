@@ -22,14 +22,28 @@ test: sketch.c test.c
 else
 
 display: sketch.c display.c
-	clang -std=c11 -Wall -pedantic -g sketch.c display.c -lSDL2 -o sketch \
-	    -fsanitize=undefined -fsanitize=address
+	clang -std=c11 -Wall -pedantic -g sketch.c display.c -lSDL2 -o sketch
 	./sketch
 
 test: sketch.c test.c
 	clang -std=c11 -Wall -pedantic -g sketch.c test.c -o sketch \
 	    -fsanitize=undefined -fsanitize=address 
-	./sketch
+	./sketch lines.sketch
+	./sketch box.sketch
+	./sketch clear.sketch
+	./sketch cross.sketch
+	./sketch diag.sketch
+	./sketch field.sketch
+	./sketch key.sketch
+	./sketch lawn.sketch
+	./sketch oxo.sketch
+	./sketch square.sketch
+
+fractals: fractals.c
+	  clang -Dtest_fractals -std=c11 -Wall -pedantic -g fractals.c -o fractals \
+	    -fsanitize=undefined -fsanitize=address
+	  ./fractals
+	  #./sketch out.sketch
 
 %: %.c
 	clang -Dtest_$@ -std=c11 -Wall -pedantic -g $@.c -o $@ \
