@@ -180,6 +180,7 @@ void frac_triangle(int n, int w, int h)
   }
 }
 
+//draws n squares
 void squares(int n, int points[n][4][2])
 {
   int v[4 * n][4];
@@ -197,6 +198,41 @@ void squares(int n, int points[n][4][2])
 
   draw_lines(4 * n, v);
 }
+
+//given two points, creates a sqaure betweeb them
+void crt_square(int x1, int y1, int x2, int y2, int sqr[4][2])
+{
+	sqr[0][0] = x1; sqr[1][0] = x1;
+	sqr[0][1] = y1; sqr[1][1] = y2;
+	sqr[2][0] = x2; sqr[3][0] = x2;
+	sqr[2][1] = y2; sqr[3][1] = y1;
+}
+
+//given one square creates another 3 alongside one of the sides,
+//the side denoted by the points a and b
+void create_square(int sqr[4][2], int n, int tso[n][4][2])
+{
+	int l = (sqr[0][0] + sqr[3][0]) / 6; 
+
+	int pos = n - 1;
+
+	crt_square(sqr[0][0], sqr[0][1], sqr[0][0] + l, 
+				sqr[0][1] + l, tso[pos]); pos--;
+	crt_square(sqr[0][0], sqr[0][1] + l, sqr[0][0] + l, 
+				sqr[0][1] + 2 * l, tso[pos]); pos--;
+	crt_square(sqr[0][0], sqr[0][1] + 2 * l, sqr[0][0] + l,
+				sqr[1][1], tso[pos]); pos--;
+	crt_square(sqr[1][0] + l, sqr[1][1] - l, sqr[1][0] + 2 * l,
+				sqr[1][1], tso[pos]); pos--;
+	crt_square(sqr[1][0] + 2 * l, sqr[1][1] - l, sqr[2][0],
+				sqr[2][1], tso[pos]); pos--;
+	crt_square(sqr[2][0] - l, sqr[2][1] - 2 * l, sqr[2][0],
+				sqr[2][1] - l, tso[pos]); pos--;
+	crt_square(sqr[2][0] - l, sqr[3][1], sqr[2][0],
+				sqr[3][1] + l, tso[pos]); pos--;
+	crt_square(sqr[0][0] + l, sqr[0][0], sqr[0][0] + 2 * l,
+				sqr[0][1] - l, tso[pos]);
+}		
 
 int main()
 {
