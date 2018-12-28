@@ -93,7 +93,7 @@ void draw_lines(int n, int v[n][4])
 {
   double times = sqrt( square(v[0][0] + v[0][2]) +
                        square(v[0][1] + v[0][3]) ) / 5;
-
+  times = 1;
   for(int j = 0; j < times; j++)
   {
     for(int i = 0; i < n; i++)
@@ -199,7 +199,7 @@ void squares(int n, int points[n][4][2])
   draw_lines(4 * n, v);
 }
 
-//given two points, creates a sqaure betweeb them
+//given two points, creates a sqaure between them
 void crt_square(int x1, int y1, int x2, int y2, int sqr[4][2])
 {
 	sqr[0][0] = x1; sqr[1][0] = x1;
@@ -208,17 +208,17 @@ void crt_square(int x1, int y1, int x2, int y2, int sqr[4][2])
 	sqr[2][1] = y2; sqr[3][1] = y1;
 }
 
-//given one square creates another 3 alongside one of the sides,
-//the side denoted by the points a and b
+//given one square creates another 8 alongside the sides of the
+//given one
 void create_square(int sqr[4][2], int n, int tso[n][4][2])
 {
-	int l = (sqr[0][0] + sqr[3][0]) / 6; 
+	int l = (sqr[3][0] - sqr[0][0]) / 3;
 
 	int pos = n - 1;
 
-	crt_square(sqr[0][0], sqr[0][1], sqr[0][0] + l, 
+	crt_square(sqr[0][0], sqr[0][1], sqr[0][0] + l,
 				sqr[0][1] + l, tso[pos]); pos--;
-	crt_square(sqr[0][0], sqr[0][1] + l, sqr[0][0] + l, 
+	crt_square(sqr[0][0], sqr[0][1] + l, sqr[0][0] + l,
 				sqr[0][1] + 2 * l, tso[pos]); pos--;
 	crt_square(sqr[0][0], sqr[0][1] + 2 * l, sqr[0][0] + l,
 				sqr[1][1], tso[pos]); pos--;
@@ -230,24 +230,39 @@ void create_square(int sqr[4][2], int n, int tso[n][4][2])
 				sqr[2][1] - l, tso[pos]); pos--;
 	crt_square(sqr[2][0] - l, sqr[3][1], sqr[2][0],
 				sqr[3][1] + l, tso[pos]); pos--;
-	crt_square(sqr[0][0] + l, sqr[0][0], sqr[0][0] + 2 * l,
-				sqr[0][1] - l, tso[pos]);
-}		
+	crt_square(sqr[0][0] + l, sqr[0][1], sqr[0][0] + 2 * l,
+				sqr[0][1] + l, tso[pos]);
+}
+
+//draws a sqare fractal
+void frac_square(int n, int w, int h)
+{
+  int nsq = pow(8,n-1), acc = 1, pos = 0;
+  int tso[nsq][4][2];
+  int l = h - 50;
+  tso[0][0][0] = (w - l) / 2; tso[0][0][1] = (h - l) / 2;
+  tso[0][1][0] = (w - l) / 2; tso[0][1][1] = (h + l) / 2;
+  tso[0][2][0] = (w + l) / 2; tso[0][2][1] = (h + l) / 2;
+  tso[0][3][0] = (w + l) / 2; tso[0][3][1] = (h - l) / 2;
+  squares(acc,tso);
+  for(int i = 1; i < n; i++)
+  {
+    pos = acc * 8 - 1;
+    for(int j = acc - 1; j >= 0; j--)
+    {
+      create_square(tso[j], pos + 1, tso);
+      pos -= 8;
+    }
+    acc *= 8;
+    squares(acc, tso);
+  }
+}
 
 int main()
 {
-  fout = fopen("out.sketch","w");
+  fout = fopen("out.sketch","wb");
   setdt(0);
-  //int v[1][4];
-  //v[0][0] = 55; v[0][1] = 100; v[0][2] = 100; v[0][3] = 10;
-  //draw_lines(1,v);
-  //frac_triangle(5, 1280, 720);
-  int v[1][4][2];
-  v[0][0][0] = 10;   v[0][0][1] = 10;
-  v[0][1][0] = 10;   v[0][1][1] = 700;
-  v[0][2][0] = 1200;   v[0][2][1] = 700;
-  v[0][3][0] = 1200;   v[0][3][1] = 10;
-  squares(1,v);
+  frac_triangle(7,1280,720);
   fclose(fout);
   return 0;
 }
