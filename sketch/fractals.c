@@ -2,6 +2,9 @@
 #include <stdbool.h>
 #include <math.h>
 #include <stdlib.h>
+#include <assert.h>
+#include <string.h>
+#include <ctype.h>
 
 FILE *fout;
 
@@ -31,7 +34,10 @@ void setx(int x)
     int prs[6];
     for(int i = 0; i < 5; i++)
       prs[i] = ( (x >> (6 * i)) & 0x3F);
-    for(int i = 4; i > 0; i--)
+    int k = 4;
+    while(prs[k] == 0 && k > 0) k--;
+    if(k != 4) k++;
+    for(int i = k; i > 0; i--)
       setpr(prs[i]);
     fputc(prs[0] | 0x00,fout);
     cursor.x += x;
@@ -43,7 +49,10 @@ void sety(int x)
   int prs[6];
   for(int i = 0; i < 5; i++)
     prs[i] = ( (x >> (6 * i)) & 0x3F);
-  for(int i = 4; i > 0; i--)
+  int k = 4;
+  while(prs[k] == 0 && k > 0) k--;
+  if(k != 4) k++;
+  for(int i = k; i > 0; i--)
     setpr(prs[i]);
   fputc(prs[0] | 0x40,fout);
   cursor.y += x;
@@ -55,8 +64,12 @@ void setdt(int x)
   int prs[6];
   for(int i = 0; i < 5; i++)
     prs[i] = ( (x >> (6 * i)) & 0x3F);
-  for(int i = 4; i >= 0; i--)
+  int k = 4;
+  while(k >= 0 && prs[k] == 0) k--;
+  if(k != 4) k++;
+  for(int i = k; i >= 0; i--)
     setpr(prs[i]);
+
   fputc(0xC1,fout);
 }
 
@@ -77,8 +90,7 @@ int square(int x){
 //betweem them
 void draw_line(int x1, int y1, int x2, int y2)
 {
-  //printf("%d %d %d %d\n",x1,y1,x2,y2 );
-  //printf("%d %d\n",x2 - x1, y2 - y1 );
+
   if(cursor.pen) pen();
   setx(x1 - cursor.x);
   sety(y1 - cursor.y);
@@ -88,12 +100,12 @@ void draw_line(int x1, int y1, int x2, int y2)
   pen();
 }
 
-//given a number of equal lines, it animates them simultaneously
+//given a number of lines, it animates them simultaneously
 void draw_lines(int n, int v[n][4])
 {
-  double times = sqrt( square(v[0][0] + v[0][2]) +
-                       square(v[0][1] + v[0][3]) ) / 5;
-  times = 1;
+  double times = sqrt( (square(v[0][0] - v[0][2]) +
+                       square(v[0][1] - v[0][3])) ) / 5;
+
   for(int j = 0; j < times; j++)
   {
     for(int i = 0; i < n; i++)
@@ -163,9 +175,10 @@ void frac_triangle(int n, int w, int h)
 {
   int nts = pow(3,n-1), acc = 1, pos = 0;
   int tso[nts][3][2];
-  tso[0][0][0] = w / 2; tso[0][0][1] = 10;
-  tso[0][1][0] = 10; tso[0][1][1] = h - 10;
-  tso[0][2][0] = w - 10; tso[0][2][1] = h - 10;
+  int h_tr = h - 50, l = 2 * h_tr * sqrt(3) / 3;
+  tso[0][0][0] = w / 2; tso[0][0][1] = (h - h_tr) / 2;
+  tso[0][1][0] = (w - l) / 2; tso[0][1][1] = (h + h_tr) / 2;
+  tso[0][2][0] = (w + l) / 2; tso[0][2][1] = (h + h_tr) / 2;
   triangle(acc, tso);
   for(int i = 1; i < n; i++)
   {
@@ -258,11 +271,286 @@ void frac_square(int n, int w, int h)
   }
 }
 
-int main()
+//checks if the type of the fractal is correct
+int check_type(char *imp)
 {
-  fout = fopen("out.sketch","wb");
-  setdt(0);
-  frac_triangle(7,1280,720);
+  if(!strcmp(imp,"square")) return 1;
+  else if(!strcmp(imp,"triangle")) return 1;
+  else return 0;
+}
+
+//asks the type of the fractal
+int ask_type()
+{
+  char imp[100];
+  printf("What kind of fractal do you want? <square,triangle>\n");
+  fgets(imp,sizeof(imp),stdin);
+  imp[strcspn(imp, "\r\n")] = '\0';
+  while(!check_type(imp))
+  {
+    printf("Spelling error, try again\n");
+    printf("What kind of fractal do you want? <square,triangle>\n");
+    fgets(imp,sizeof(imp),stdin);
+    imp[strcspn(imp, "\r\n")] = '\0';
+  }
+  if(!strcmp(imp,"triangle")) return 1;
+  else return 0;
+}
+
+//asks the depth of the fractal
+int ask_depth()
+{
+  char imp[100];
+  printf("How many times should the fractal repeat? (between 1 and 9)\n");
+  fgets(imp,sizeof(imp),stdin);
+  imp[strcspn(imp, "\r\n")] = '\0';
+  while(strlen(imp) != 1 || (imp[0] < '1' || imp[0] > '9'))
+  {
+    printf("Spelling error, try again\n");
+    printf("How many times should the fractal repeat? (between 1 and 9)\n");
+    fgets(imp,sizeof(imp),stdin);
+    imp[strcspn(imp, "\r\n")] = '\0';
+  }
+  return imp[0] - '0';
+}
+
+//return the natural numbers represented by a string
+//or -1 if the input is not valid
+int is_natural(char *s)
+{
+  for(int i = 0; i < strlen(s); i++)
+    if(!isdigit(s[i])) return -1;
+
+  int n = atoi(s);
+  if(n <= 0) return -1;
+  else return n;
+}
+
+//asks for the width of the screen
+int ask_width()
+{
+  char imp[100];
+  int n;
+  printf("What is the width of your screen?\n");
+  fgets(imp,sizeof(imp),stdin);
+  imp[strcspn(imp, "\r\n")] = '\0';
+  n = is_natural(imp);
+  while(n == -1)
+  {
+    printf("Spelling error, try again\n");
+    printf("What is the width of your screen?\n");
+    fgets(imp,sizeof(imp),stdin);
+    imp[strcspn(imp, "\r\n")] = '\0';
+    n = is_natural(imp);
+  }
+  return n;
+}
+
+//asks for the height of the screen
+int ask_height()
+{
+  char imp[100];
+  int n;
+  printf("What is the height of your screen?\n");
+  fgets(imp,sizeof(imp),stdin);
+  imp[strcspn(imp, "\r\n")] = '\0';
+  n = is_natural(imp);
+  while(n == -1)
+  {
+    printf("Spelling error, try again\n");
+    printf("What is the height of your screen?\n");
+    fgets(imp,sizeof(imp),stdin);
+    imp[strcspn(imp, "\r\n")] = '\0';
+    n = is_natural(imp);
+  }
+  return n;
+}
+
+//asks for the pause between draws
+int ask_pause()
+{
+  char imp[100];
+  int n;
+  printf("How big do you want the pause between draws (milliseconds)?\n");
+  fgets(imp,sizeof(imp),stdin);
+  imp[strcspn(imp, "\r\n")] = '\0';
+  n = is_natural(imp);
+  while(n == -1)
+  {
+    printf("Spelling error, try again\n");
+    printf("How big do you want the pause between draws (milliseconds)?\n");
+    fgets(imp,sizeof(imp),stdin);
+    imp[strcspn(imp, "\r\n")] = '\0';
+    n = is_natural(imp);
+  }
+  return n;
+}
+
+//runs the program with user input
+void run()
+{
+  char imp[100];
+  int depth, type, w, h, pause;
+  printf("What is the name of the resulting file?");
+  printf(" (.sketch added automatically)\n");
+  fgets(imp,sizeof(imp),stdin);
+  imp[strcspn(imp, "\r\n")] = '\0';
+  strcat(imp,".sketch");
+
+  type = ask_type();
+  depth = ask_depth();
+  w = ask_width();
+  h = ask_height();
+  pause = ask_pause();
+
+  fout = fopen(imp,"wb");
+  setdt(pause);
+
+  if(type == 0) frac_square(depth, w, h);
+  else frac_triangle(depth, w, h);
+
   fclose(fout);
+}
+
+//-----------------------------------------------------------------
+//testing
+
+//tests pen
+void test_pen()
+{
+    fout = fopen("test.sketch","wb");
+    pen();
+    assert(cursor.pen == 1);
+    pen();
+    assert(cursor.pen == 0);
+    fclose(fout);
+    FILE *fin = fopen("test.sketch","rb");
+    unsigned char b = fgetc(fin);
+    assert(b == 0xC0);
+    b = fgetc(fin);
+    assert(b == 0xC0);
+    fclose(fin);
+}
+
+//tests setpr
+void test_pr()
+{
+  fout = fopen("test.sketch","wb");
+  setpr(0x3F);
+  setpr(0x06);
+  setpr(0x21);
+  setpr(0x00);
+  fclose(fout);
+  FILE *fin = fopen("test.sketch","rb");
+  unsigned char b = fgetc(fin); assert(b == 0xBF);
+  b = fgetc(fin); assert(b == 0x86);
+  b = fgetc(fin); assert(b == 0xA1);
+  b = fgetc(fin); assert(b == 0x80);
+  fclose(fin);
+}
+
+//tests setx
+void testx()
+{
+  fout = fopen("test.sketch","wb");
+  setx(0x3FFFFFFF); assert(cursor.x == 0x3FFFFFFF);
+  setx(0x0FF00000); assert(cursor.x == 0x4FEFFFFF);
+  setx(0x00003B35); assert(cursor.x == 0x4FF03B34);
+  fclose(fout);
+  FILE *fin = fopen("test.sketch","rb");
+  unsigned char b = fgetc(fin); assert(b == 0xBF);
+  b = fgetc(fin); assert(b == 0xBF); b = fgetc(fin); assert(b == 0xBF);
+  b = fgetc(fin); assert(b == 0xBF); b = fgetc(fin); assert(b == 0x3F);
+
+  b = fgetc(fin); assert(b == 0x8F); b = fgetc(fin); assert(b == 0xBC);
+  b = fgetc(fin); assert(b == 0x80); b = fgetc(fin);
+  b = fgetc(fin); assert(b == 0x00);
+
+  b = fgetc(fin); assert(b == 0x80); b = fgetc(fin); assert(b == 0x83);
+  b = fgetc(fin); assert(b == 0xAC); b = fgetc(fin); assert(b == 0x35);
+  fclose(fin);
+}
+
+//tests sety
+void testy()
+{
+  fout = fopen("test.sketch","wb");
+  sety(0x3FFFFFFF); assert(cursor.y == 0x3FFFFFFF);
+  sety(0x000ABC00); assert(cursor.y == 0x400ABBFF);
+  sety(0x00003BF5); assert(cursor.y == 0x400AF7F4);
+  fclose(fout);
+  FILE *fin = fopen("test.sketch","rb");
+  unsigned char b = fgetc(fin); assert(b == 0xBF);
+  b = fgetc(fin); assert(b == 0xBF); b = fgetc(fin); assert(b == 0xBF);
+  b = fgetc(fin); assert(b == 0xBF); b = fgetc(fin); assert(b == 0x7F);
+
+  b = fgetc(fin); assert(b == 0x80);
+  b = fgetc(fin); assert(b == 0x82); b = fgetc(fin); assert(b == 0xAB);
+  b = fgetc(fin); assert(b == 0xB0); b = fgetc(fin); assert(b == 0x40);
+
+  b = fgetc(fin); assert(b == 0x80); b = fgetc(fin); assert(b == 0x83);
+  b = fgetc(fin); assert(b == 0xAF); b = fgetc(fin); assert(b == 0x75);
+  fclose(fin);
+}
+
+//tests setdt and calldt
+void testdt()
+{
+  fout = fopen("test.sketch","wb");
+  setdt(0xF); calldt();
+  setdt(0x0); calldt();
+  setdt(0xABC);
+  fclose(fout);
+  FILE *fin = fopen("test.sketch","rb");
+  unsigned char b = fgetc(fin); assert(b == 0x80);
+  b = fgetc(fin); assert(b == 0x8F); b = fgetc(fin); assert(b == 0xC1);
+  b = fgetc(fin); assert(b == 0x80); b = fgetc(fin); assert(b == 0xC1);
+
+  b = fgetc(fin); assert(b == 0x80); b = fgetc(fin); assert(b == 0xC1);
+  b = fgetc(fin); assert(b == 0x80); b = fgetc(fin); assert(b == 0xC1);
+
+  b = fgetc(fin); assert(b == 0x80); b = fgetc(fin); assert(b == 0xAA);
+  b = fgetc(fin); assert(b == 0xBC); b = fgetc(fin); assert(b == 0xC1);
+  fclose(fin);
+}
+
+//tests is_natural
+void test_isnatural()
+{
+  char a[50];
+  strcpy(a,"345");
+  assert(is_natural(a) == 345);
+  strcpy(a,"4.6456");
+  assert(is_natural(a) == -1);
+  strcpy(a,"234r5");
+  assert(is_natural(a) == -1);
+  strcpy(a,"-234");
+  assert(is_natural(a) == -1);
+  strcpy(a,"0");
+  assert(is_natural(a) == -1);
+  strcpy(a,"678888");
+  assert(is_natural(a) == 678888);
+  strcpy(a,"asc");
+  assert(is_natural(a) == -1);
+  strcpy(a,"0x34");
+  assert(is_natural(a) == -1);
+}
+
+//run all tests
+void test()
+{
+  test_pen();
+  test_pr();
+  testx();
+  testy();
+  testdt();
+  test_isnatural();
+  printf("All tests passed!\n");
+}
+
+int main(int n, char *args[n])
+{
+  if(n == 2 && strcmp(args[1],"test") == 0) test();
+  else run();
   return 0;
 }
