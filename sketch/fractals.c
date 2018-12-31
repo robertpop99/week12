@@ -302,6 +302,8 @@ int ask_depth()
 {
   char imp[100];
   printf("How many times should the fractal repeat? (between 1 and 9)\n");
+  printf("Big numbers might result in the program runnig out of memory");
+  printf(" for the sqaure type. 6 and below should be safe\n");
   fgets(imp,sizeof(imp),stdin);
   imp[strcspn(imp, "\r\n")] = '\0';
   while(strlen(imp) != 1 || (imp[0] < '1' || imp[0] > '9'))
