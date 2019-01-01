@@ -272,48 +272,48 @@ void frac_square(int n, int w, int h)
 }
 
 //checks if the type of the fractal is correct
-int check_type(char *imp)
+int check_type(char *inp)
 {
-  if(!strcmp(imp,"square")) return 1;
-  else if(!strcmp(imp,"triangle")) return 1;
+  if(!strcmp(inp,"square")) return 1;
+  else if(!strcmp(inp,"triangle")) return 1;
   else return 0;
 }
 
 //asks the type of the fractal
 int ask_type()
 {
-  char imp[100];
+  char inp[100];
   printf("What kind of fractal do you want? <square,triangle>\n");
-  fgets(imp,sizeof(imp),stdin);
-  imp[strcspn(imp, "\r\n")] = '\0';
-  while(!check_type(imp))
+  fgets(inp,sizeof(inp),stdin);
+  inp[strcspn(inp, "\r\n")] = '\0';
+  while(!check_type(inp))
   {
     printf("Spelling error, try again\n");
     printf("What kind of fractal do you want? <square,triangle>\n");
-    fgets(imp,sizeof(imp),stdin);
-    imp[strcspn(imp, "\r\n")] = '\0';
+    fgets(inp,sizeof(inp),stdin);
+    inp[strcspn(inp, "\r\n")] = '\0';
   }
-  if(!strcmp(imp,"triangle")) return 1;
+  if(!strcmp(inp,"triangle")) return 1;
   else return 0;
 }
 
 //asks the depth of the fractal
 int ask_depth()
 {
-  char imp[100];
+  char inp[100];
   printf("How many times should the fractal repeat? (between 1 and 9)\n");
   printf("Big numbers might result in the program runnig out of memory");
   printf(" for the sqaure type. 6 and below should be safe\n");
-  fgets(imp,sizeof(imp),stdin);
-  imp[strcspn(imp, "\r\n")] = '\0';
-  while(strlen(imp) != 1 || (imp[0] < '1' || imp[0] > '9'))
+  fgets(inp,sizeof(inp),stdin);
+  inp[strcspn(inp, "\r\n")] = '\0';
+  while(strlen(inp) != 1 || (inp[0] < '1' || inp[0] > '9'))
   {
     printf("Spelling error, try again\n");
     printf("How many times should the fractal repeat? (between 1 and 9)\n");
-    fgets(imp,sizeof(imp),stdin);
-    imp[strcspn(imp, "\r\n")] = '\0';
+    fgets(inp,sizeof(inp),stdin);
+    inp[strcspn(inp, "\r\n")] = '\0';
   }
-  return imp[0] - '0';
+  return inp[0] - '0';
 }
 
 //return the natural numbers represented by a string
@@ -331,19 +331,19 @@ int is_natural(char *s)
 //asks for the width of the screen
 int ask_width()
 {
-  char imp[100];
+  char inp[100];
   int n;
   printf("What is the width of your screen?\n");
-  fgets(imp,sizeof(imp),stdin);
-  imp[strcspn(imp, "\r\n")] = '\0';
-  n = is_natural(imp);
+  fgets(inp,sizeof(inp),stdin);
+  inp[strcspn(inp, "\r\n")] = '\0';
+  n = is_natural(inp);
   while(n == -1)
   {
     printf("Spelling error, try again\n");
     printf("What is the width of your screen?\n");
-    fgets(imp,sizeof(imp),stdin);
-    imp[strcspn(imp, "\r\n")] = '\0';
-    n = is_natural(imp);
+    fgets(inp,sizeof(inp),stdin);
+    inp[strcspn(inp, "\r\n")] = '\0';
+    n = is_natural(inp);
   }
   return n;
 }
@@ -351,19 +351,19 @@ int ask_width()
 //asks for the height of the screen
 int ask_height()
 {
-  char imp[100];
+  char inp[100];
   int n;
   printf("What is the height of your screen?\n");
-  fgets(imp,sizeof(imp),stdin);
-  imp[strcspn(imp, "\r\n")] = '\0';
-  n = is_natural(imp);
+  fgets(inp,sizeof(inp),stdin);
+  inp[strcspn(inp, "\r\n")] = '\0';
+  n = is_natural(inp);
   while(n == -1)
   {
     printf("Spelling error, try again\n");
     printf("What is the height of your screen?\n");
-    fgets(imp,sizeof(imp),stdin);
-    imp[strcspn(imp, "\r\n")] = '\0';
-    n = is_natural(imp);
+    fgets(inp,sizeof(inp),stdin);
+    inp[strcspn(inp, "\r\n")] = '\0';
+    n = is_natural(inp);
   }
   return n;
 }
@@ -371,19 +371,19 @@ int ask_height()
 //asks for the pause between draws
 int ask_pause()
 {
-  char imp[100];
+  char inp[100];
   int n;
   printf("How big do you want the pause between draws (milliseconds)?\n");
-  fgets(imp,sizeof(imp),stdin);
-  imp[strcspn(imp, "\r\n")] = '\0';
-  n = is_natural(imp);
+  fgets(inp,sizeof(inp),stdin);
+  inp[strcspn(inp, "\r\n")] = '\0';
+  n = is_natural(inp);
   while(n == -1)
   {
     printf("Spelling error, try again\n");
     printf("How big do you want the pause between draws (milliseconds)?\n");
-    fgets(imp,sizeof(imp),stdin);
-    imp[strcspn(imp, "\r\n")] = '\0';
-    n = is_natural(imp);
+    fgets(inp,sizeof(inp),stdin);
+    inp[strcspn(inp, "\r\n")] = '\0';
+    n = is_natural(inp);
   }
   return n;
 }
@@ -391,13 +391,13 @@ int ask_pause()
 //runs the program with user input
 void run()
 {
-  char imp[100];
+  char inp[100];
   int depth, type, w, h, pause;
   printf("What is the name of the resulting file?");
   printf(" (.sketch added automatically)\n");
-  fgets(imp,sizeof(imp),stdin);
-  imp[strcspn(imp, "\r\n")] = '\0';
-  strcat(imp,".sketch");
+  fgets(inp,sizeof(inp),stdin);
+  inp[strcspn(inp, "\r\n")] = '\0';
+  strcat(inp,".sketch");
 
   type = ask_type();
   depth = ask_depth();
@@ -405,7 +405,7 @@ void run()
   h = ask_height();
   pause = ask_pause();
 
-  fout = fopen(imp,"wb");
+  fout = fopen(inp,"wb");
   setdt(pause);
 
   if(type == 0) frac_square(depth, w, h);
