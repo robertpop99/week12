@@ -376,14 +376,16 @@ int ask_pause()
   printf("How big do you want the pause between draws (milliseconds)?\n");
   fgets(inp,sizeof(inp),stdin);
   inp[strcspn(inp, "\r\n")] = '\0';
-  n = is_natural(inp);
+  if(!strcmp(inp,"0")) n = 0;
+  else n = is_natural(inp);
   while(n == -1)
   {
     printf("Spelling error, try again\n");
     printf("How big do you want the pause between draws (milliseconds)?\n");
     fgets(inp,sizeof(inp),stdin);
     inp[strcspn(inp, "\r\n")] = '\0';
-    n = is_natural(inp);
+    if(!strcmp(inp,"0")) n = 0;
+    else n = is_natural(inp);
   }
   return n;
 }

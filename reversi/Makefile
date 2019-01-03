@@ -19,6 +19,6 @@ else
 %: %.c
 	clang -Dtest_$@ -std=c11 -Wall -pedantic -g $@.c -lSDL2 -o $@ \
 	    -fsanitize=undefined -fsanitize=address
-	./$@
+	./$@ test
 
 endif

@@ -10,7 +10,7 @@
 enum player {EMPTY, BLACK, WHITE};
 typedef enum player player;
 
-enum {width = 1280, height = 720};
+int width = 1280, height = 720;
 
 struct piece
 {
@@ -277,7 +277,7 @@ int transform_x(table *t, int i)
   int h = ( height - 100) / t->n;
   int x0 = width / 2 - h * (t->n / 2);
   int x = 0;
-  if(i < x0 || i > x0 + h * t->n) x = -1;
+  if(i < x0 || i > x0 + h * t->n)  return -1;
   while(i - h * (x + 1) > x0) x++;
   return x;
 }
@@ -289,7 +289,7 @@ int transform_y(table *t, int j)
   int h = ( height - 100) / t->n;
   int y0 = height / 2 - h * (t->n / 2);
   int y = 0;
-  if(j < y0 || j > y0 + h * t->n) y = -1;
+  if(j < y0 || j > y0 + h * t->n) return -1;
   while(j - h * (y + 1) > y0) y++;
   return y;
 }
@@ -310,8 +310,8 @@ int finished_game(table *t, int r)
             flag = 1;
         }
       }
-    if(cont != 0 && flag == 1) return 1;
-    else return 0;
+    if(cont != 0 && flag == 1) return 0;
+    else return 1;
 }
 
 //checks if there is an available move for the current player
@@ -362,17 +362,40 @@ void next_move(display *d, table *t, player p, int r)
   draw_pieces(d, t);
 }
 
-//runs the program
-void run()
+//shows the winenr on the screen
+void show_winner(table *t)
 {
-  table *t =  create_table(8);
+  int b = 0, w = 0;
+  for(int i = 0; i < t->n; i++)
+    for(int j = 0; j < t->n; j++)
+    {
+      if(t->grid[i][j].type == BLACK) b++;
+      else if(t->grid[i][j].type == WHITE) w++;
+    }
+  if(b > w) printf("Black player is the winner!\n");
+  else if(w > b) printf("White player is the winner!\n");
+  else printf("Draw!\n");
+}
+
+//shows the next player
+void show_next_player(player p)
+{
+  if(p == BLACK) printf("Black's turn\n");
+  else printf("White's turn\n");
+}
+
+//runs the program
+void run(int n, int w, int h)
+{
+  table *t =  create_table(n);
+  width = w, height = h;
   display *d = initiate_screen();
   draw_table(d, t);
   draw_pieces(d , t);
   player turn = BLACK; int r = 0;
-  while(finished_game(t, r + 1))
+  while(!finished_game(t, r + 1))
   {
-    r++;
+    r++; show_next_player(turn);
     if(!available_move(d, t, turn, r))
     {
       if(turn == BLACK) turn = WHITE;
@@ -385,6 +408,7 @@ void run()
   }
   SDL_Delay(5000);
   SDL_Quit();
+  show_winner(t);
   free_table(t);
 }
 
@@ -501,6 +525,59 @@ void test_make_move()
   free_table(t);
 }
 
+//tests transform_x and transform_y
+void test_transformxy()
+{
+  table *t = create_table(8);
+  assert(transform_x(t,331) == -1);
+  assert(transform_x(t,332) == 0);
+  assert(transform_x(t,948) == 7);
+  assert(transform_x(t,949) == -1);
+  assert(transform_x(t,409) == 0);
+  assert(transform_x(t,410) == 1);
+  assert(transform_x(t,717) == 4);
+  assert(transform_x(t,718) == 5);
+  assert(transform_y(t,51) == -1);
+  assert(transform_y(t,52) == 0);
+  assert(transform_y(t,668) == 7);
+  assert(transform_y(t,669) == -1);
+  assert(transform_y(t,129) == 0);
+  assert(transform_y(t,130) == 1);
+  assert(transform_y(t,530) == 6);
+  assert(transform_y(t,600) == 7);
+  free_table(t);
+}
+
+//tests finished_game
+void test_finished()
+{
+  table *t = create_table(4);
+  t->grid[1][1].type = BLACK; t->grid[1][2].type = BLACK;
+  t->grid[2][1].type = BLACK; t->grid[2][2].type = BLACK;
+  t->grid[3][1].type = WHITE;
+  assert(finished_game(t, 6) == 0);
+  t->grid[0][1].type = BLACK; t->grid[1][3].type = BLACK;
+  assert(finished_game(t, 6) == 1);
+  t->grid[0][0].type = WHITE; t->grid[0][2].type = BLACK;
+  t->grid[0][3].type = WHITE; t->grid[1][0].type = WHITE;
+  t->grid[2][0].type = WHITE; t->grid[3][0].type = BLACK;
+  t->grid[3][2].type = BLACK; t->grid[3][3].type = WHITE;
+  t->grid[2][3].type = WHITE;
+  assert(finished_game(t, 6) == 1);
+  free_table(t);
+  t = create_table(4);
+  t->grid[1][1].type = WHITE; t->grid[1][2].type = WHITE;
+  t->grid[2][1].type = BLACK; t->grid[2][2].type = BLACK;
+  assert(finished_game(t, 6) == 0);
+  t->grid[3][1].type = WHITE; t->grid[1][3].type = WHITE;
+  t->grid[0][2].type = BLACK; t->grid[2][3].type = BLACK;
+  assert(finished_game(t, 6) == 0);
+  t->grid[3][0].type = BLACK; t->grid[3][2].type = BLACK;
+  t->grid[3][3].type = BLACK;
+  assert(finished_game(t, 6) == 0);
+  free_table(t);
+}
+
 //does tests
 void test()
 {
@@ -508,14 +585,37 @@ void test()
   test_is_line();
   test_later_moves();
   test_make_move();
+  test_transformxy();
+  test_finished();
   printf("All tests passed!\n");
 }
 
+//main function
 int main(int n, char *args[n])
 {
-  // if(n == 2 && strcmp(args[1],"test") == 0) test();
-  // else run();
-  //test();
-  run();
+  if(n == 1) run(8, 1280, 720);
+  else if(n == 2){
+      if(strcmp(args[1],"test") == 0) test();
+      else{
+        int n = atoi(args[1]);
+        if(n % 2 == 0 && n >= 4) run(n, 1280, 720);
+        else{  printf("Use ./reversi test or ./reversi n, where n is ");
+               printf("an even number greater or equal to 4\n"); exit(1);}
+      }
+    }
+  else if(n == 3){
+    int w = atoi(args[1]), h = atoi(args[2]);
+    if( w > 0 && h > 0 && w > h) run(8, w ,h);
+    else{ printf("Use ./reversi w h where w is the width of the screen and ");
+          printf("h is the height\n"); exit(1);}
+  }
+  else if(n == 4){
+    int n = atoi(args[1]), w = atoi(args[2]), h = atoi(args[3]);
+    if(n % 2 == 0 && n >= 4 && w > 0 && h > 0 && w > h) run(n, w ,h);
+    else{ printf("Use ./reversi n w h, where n is an even number ");
+          printf("greater or equal to 4, w is the width of the screen ");
+          printf("and h is the heigh\n"); exit(1);}
+  }
+  else run(8, 1280, 720);
   return 0;
 }
